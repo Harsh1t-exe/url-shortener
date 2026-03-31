@@ -25,6 +25,11 @@ app.use(express.urlencoded({ extended: true }));
 // Serve static files (UI)
 app.use(express.static('public'));
 
+// Explicitly serve index.html for root path
+app.get('/', (req, res) => {
+  res.sendFile(__dirname + '/../public/index.html');
+});
+
 // Rate limiting
 app.use(rateLimit(config.rateLimit));
 
