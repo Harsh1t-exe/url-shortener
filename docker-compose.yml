@@ -1,0 +1,48 @@
+version: '3.8'
+
+services:
+  mongodb:
+    image: mongo:6
+    container_name: url-shortener-db
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: password
+    volumes:
+      - mongodb_data:/data/db
+    networks:
+      - url-shortener-network
+
+  redis:
+    image: redis:7-alpine
+    container_name: url-shortener-redis
+    ports:
+      - "6379:6379"
+    networks:
+      - url-shortener-network
+
+  app:
+    build: .
+    container_name: url-shortener-app
+    ports:
+      - "3000:3000"
+    environment:
+      MONGODB_URI: mongodb://admin:password@mongodb:27017/url-shortener
+      REDIS_URL: redis://redis:6379
+      BASE_URL: http://localhost:3000
+      NODE_ENV: development
+    depends_on:
+      - mongodb
+      - redis
+    networks:
+      - url-shortener-network
+    volumes:
+      - ./src:/app/src
+
+volumes:
+  mongodb_data:
+
+networks:
+  url-shortener-network:
+    driver: bridge

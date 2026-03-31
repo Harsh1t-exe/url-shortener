@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>URL Shortener</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <h1>🔗 URL Shortener</h1>
+            <p class="subtitle">Create short, memorable links</p>
+        </header>
+
+        <!-- Main Content -->
+        <main class="main">
+            <!-- Create Section -->
+            <section class="card create-section">
+                <h2>Create Short URL</h2>
+                
+                <form id="shortenForm" class="form">
+                    <div class="form-group">
+                        <label for="originalUrl">URL to Shorten</label>
+                        <input 
+                            type="url" 
+                            id="originalUrl" 
+                            placeholder="https://example.com/very/long/url"
+                            required
+                        >
+                    </div>
+
+                    <div class="form-group">
+                        <label for="customAlias">Custom Alias (Optional)</label>
+                        <input 
+                            type="text" 
+                            id="customAlias" 
+                            placeholder="mysite (alphanumeric only)"
+                            pattern="[a-zA-Z0-9]*"
+                            minlength="3"
+                            maxlength="20"
+                        >
+                    </div>
+
+                    <button type="submit" class="btn btn-primary">Shorten URL</button>
+                </form>
+
+                <!-- Error Message -->
+                <div id="errorMessage" class="error-message" style="display: none;"></div>
+
+                <!-- Success Message -->
+                <div id="successMessage" class="success-box" style="display: none;">
+                    <div class="result-item">
+                        <div class="result-label">Short URL:</div>
+                        <div class="result-content">
+                            <input type="text" id="resultShortUrl" readonly>
+                            <button type="button" class="btn btn-small btn-copy" onclick="copyToClipboard('#resultShortUrl')">Copy</button>
+                        </div>
+                    </div>
+
+                    <div class="result-item">
+                        <div class="result-label">Original URL:</div>
+                        <div class="result-content">
+                            <input type="text" id="resultOriginalUrl" readonly>
+                        </div>
+                    </div>
+
+                    <div class="result-item">
+                        <div class="result-label">Created:</div>
+                        <div id="resultCreatedAt"></div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Recent URLs Section -->
+            <section class="card urls-section">
+                <h2>Recent URLs</h2>
+                <div id="urlsList" class="urls-list">
+                    <p class="placeholder">No URLs created yet</p>
+                </div>
+            </section>
+        </main>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <p>Built with Node.js • Express • MongoDB</p>
+        </footer>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
