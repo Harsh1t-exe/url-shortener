@@ -1,4 +1,5 @@
 const express = require('express');
+const path = require('path');
 const cors = require('cors');
 const helmet = require('helmet');
 
@@ -23,8 +24,12 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // Serve static files (UI)
-// index: ['index.html'] tells Express to serve index.html for root path /
-app.use(express.static('public', { index: ['index.html'] }));
+app.use(express.static('public'));
+
+// Explicit route for homepage - ensures index.html is always served
+app.get('/', (req, res) => {
+  res.type('text/html').sendFile(path.resolve(__dirname, '../public/index.html'));
+});
 
 // Rate limiting
 app.use(rateLimit(config.rateLimit));
