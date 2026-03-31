@@ -1,4 +1,5 @@
 const express = require('express');
+const path = require('path');
 const cors = require('cors');
 const helmet = require('helmet');
 
@@ -27,7 +28,7 @@ app.use(express.static('public'));
 
 // Explicitly serve index.html for root path
 app.get('/', (req, res) => {
-  res.sendFile(__dirname + '/../public/index.html');
+  res.sendFile(path.join(__dirname, '../public/index.html'));
 });
 
 // Rate limiting
