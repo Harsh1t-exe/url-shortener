@@ -20,6 +20,13 @@ router.get('/api/urls/:shortCode/stats', getUrlStatistics);
 router.delete('/api/urls/:shortCode', deleteShortenedUrl);
 
 // Redirect route (should be last to avoid conflicts)
-router.get('/:shortCode', redirectToOriginal);
+// Don't match "/" - let static files handle that
+router.get('/:shortCode', (req, res, next) => {
+  // Skip if empty (/) - let express.static handle root
+  if (!req.params.shortCode) {
+    return next();
+  }
+  redirectToOriginal(req, res, next);
+});
 
 module.exports = router;

@@ -22,8 +22,9 @@ app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Serve static files (UI) - automatically serves index.html for root path
-app.use(express.static('public'));
+// Serve static files (UI)
+// index: ['index.html'] tells Express to serve index.html for root path /
+app.use(express.static('public', { index: ['index.html'] }));
 
 // Rate limiting
 app.use(rateLimit(config.rateLimit));
