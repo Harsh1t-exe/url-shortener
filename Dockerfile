@@ -12,6 +12,9 @@ RUN npm ci --only=production
 # Copy application code
 COPY src ./src
 
+# Copy public assets (UI files)
+COPY public ./public
+
 # Expose port
 EXPOSE 3000
 
