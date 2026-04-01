@@ -71,20 +71,27 @@ document.getElementById('shortenForm').addEventListener('submit', async (e) => {
     }
 });
 
-// Copy to clipboard
+// Copy to clipboard (modern Clipboard API)
 function copyToClipboard(selector) {
     const element = document.querySelector(selector);
-    element.select();
-    document.execCommand('copy');
+    const textToCopy = element.value;
     
-    // Show feedback
-    const btn = event.target;
-    const originalText = btn.textContent;
-    btn.textContent = '✓ Copied!';
-    
-    setTimeout(() => {
-        btn.textContent = originalText;
-    }, 2000);
+    // Use modern Clipboard API
+    navigator.clipboard.writeText(textToCopy).then(() => {
+        // Show success feedback
+        const btn = event.target;
+        const originalText = btn.textContent;
+        btn.textContent = '✓ Copied!';
+        
+        setTimeout(() => {
+            btn.textContent = originalText;
+        }, 2000);
+    }).catch(err => {
+        // Fallback to old method if Clipboard API fails
+        element.select();
+        document.execCommand('copy');
+        alert('✓ Copied to clipboard!');
+    });
 }
 
 // Update URLs list
@@ -112,22 +119,27 @@ function updateUrlsList() {
     `).join('');
 }
 
-// Copy URL to clipboard
+// Copy URL to clipboard (modern Clipboard API)
 function copyUrlToClipboard(url) {
-    const textarea = document.createElement('textarea');
-    textarea.value = url;
-    document.body.appendChild(textarea);
-    textarea.select();
-    document.execCommand('copy');
-    document.body.removeChild(textarea);
-
-    const btn = event.target;
-    const originalText = btn.textContent;
-    btn.textContent = '✓ Copied!';
-    
-    setTimeout(() => {
-        btn.textContent = originalText;
-    }, 2000);
+    navigator.clipboard.writeText(url).then(() => {
+        // Show success feedback
+        const btn = event.target;
+        const originalText = btn.textContent;
+        btn.textContent = '✓ Copied!';
+        
+        setTimeout(() => {
+            btn.textContent = originalText;
+        }, 2000);
+    }).catch(err => {
+        // Fallback to old method
+        const textarea = document.createElement('textarea');
+        textarea.value = url;
+        document.body.appendChild(textarea);
+        textarea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textarea);
+        alert('✓ Copied to clipboard!');
+    });
 }
 
 // Get statistics
