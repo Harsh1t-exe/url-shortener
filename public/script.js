@@ -11,11 +11,9 @@ document.getElementById('shortenForm').addEventListener('submit', async (e) => {
     const successDiv = document.getElementById('successMessage');
     const submitBtn = e.target.querySelector('button[type="submit"]');
 
-    // Clear previous messages
     errorDiv.style.display = 'none';
     successDiv.style.display = 'none';
 
-    // Disable button
     submitBtn.disabled = true;
     submitBtn.textContent = 'Creating...';
 
@@ -39,13 +37,11 @@ document.getElementById('shortenForm').addEventListener('submit', async (e) => {
             throw new Error(data.message || 'Failed to create short URL');
         }
 
-        // Show success
         document.getElementById('resultShortUrl').value = data.data.shortUrl;
         document.getElementById('resultOriginalUrl').value = data.data.originalUrl;
         document.getElementById('resultCreatedAt').textContent = new Date(data.data.createdAt).toLocaleString();
         successDiv.style.display = 'block';
 
-        // Add to recent URLs
         createdUrls.unshift({
             shortCode: data.data.shortCode,
             shortUrl: data.data.shortUrl,
@@ -54,11 +50,10 @@ document.getElementById('shortenForm').addEventListener('submit', async (e) => {
             clickCount: 0
         });
 
-        // Keep only last 10
         createdUrls = createdUrls.slice(0, 10);
         updateUrlsList();
+        saveUrls();
 
-        // Reset form
         e.target.reset();
         document.getElementById('originalUrl').focus();
 
@@ -71,30 +66,26 @@ document.getElementById('shortenForm').addEventListener('submit', async (e) => {
     }
 });
 
-// Copy to clipboard (modern Clipboard API)
+// Copy to clipboard (main form)
 function copyToClipboard(selector) {
     const element = document.querySelector(selector);
     const textToCopy = element.value;
     
-    // Use modern Clipboard API
     navigator.clipboard.writeText(textToCopy).then(() => {
-        // Show success feedback
         const btn = event.target;
         const originalText = btn.textContent;
         btn.textContent = '✓ Copied!';
-        
         setTimeout(() => {
             btn.textContent = originalText;
         }, 2000);
     }).catch(err => {
-        // Fallback to old method if Clipboard API fails
         element.select();
         document.execCommand('copy');
         alert('✓ Copied to clipboard!');
     });
 }
 
-// Update URLs list
+// Update URLs list - uses data attributes and event delegation
 function updateUrlsList() {
     const urlsList = document.getElementById('urlsList');
 
@@ -111,85 +102,74 @@ function updateUrlsList() {
                 <div class="url-meta">Created: ${new Date(url.createdAt).toLocaleString()}</div>
             </div>
             <div class="url-actions">
-                <button class="btn btn-small btn-copy" onclick="copyUrlToClipboard(this, '${url.shortUrl}')">Copy Link</button>
-                <button class="btn btn-small btn-stats" onclick="getStats(this, '${url.shortCode}')">Stats</button>
-                <button class="btn btn-small btn-delete" onclick="deleteUrl(this, '${url.shortCode}', ${index})">Delete</button>
+                <button class="btn btn-small btn-copy" data-url="${url.shortUrl}" data-type="copy">Copy Link</button>
+                <button class="btn btn-small btn-stats" data-code="${url.shortCode}" data-type="stats">Stats</button>
+                <button class="btn btn-small btn-delete" data-code="${url.shortCode}" data-index="${index}" data-type="delete">Delete</button>
             </div>
         </div>
     `).join('');
+
+    // Attach event listeners
+    attachUrlActions();
 }
 
-// Copy URL to clipboard (modern Clipboard API)
-function copyUrlToClipboard(btn, url) {
-    navigator.clipboard.writeText(url).then(() => {
-        // Show success feedback
-        const originalText = btn.textContent;
-        btn.textContent = '✓ Copied!';
-        
-        setTimeout(() => {
-            btn.textContent = originalText;
-        }, 2000);
-    }).catch(err => {
-        // Fallback to old method
-        const textarea = document.createElement('textarea');
-        textarea.value = url;
-        document.body.appendChild(textarea);
-        textarea.select();
-        document.execCommand('copy');
-        document.body.removeChild(textarea);
-        alert('✓ Copied to clipboard!');
-    });
+// Attach event listeners using event delegation
+function attachUrlActions() {
+    const urlsList = document.getElementById('urlsList');
+    
+    urlsList.removeEventListener('click', handleUrlAction);
+    urlsList.addEventListener('click', handleUrlAction);
 }
 
-// Get statistics
-async function getStats(btn, shortCode) {
-    try {
-        const response = await fetch(`/api/urls/${shortCode}/stats`);
-        const data = await response.json();
+// Handle all URL actions
+async function handleUrlAction(e) {
+    const btn = e.target.closest('button[data-type]');
+    if (!btn) return;
 
-        if (!response.ok) {
-            throw new Error(data.message || 'Failed to get statistics');
+    const type = btn.dataset.type;
+
+    if (type === 'copy') {
+        const url = btn.dataset.url;
+        try {
+            await navigator.clipboard.writeText(url);
+            const originalText = btn.textContent;
+            btn.textContent = '✓ Copied!';
+            setTimeout(() => {
+                btn.textContent = originalText;
+            }, 2000);
+        } catch {
+            alert('✓ Copied to clipboard!');
         }
+    } 
+    else if (type === 'stats') {
+        const shortCode = btn.dataset.code;
+        try {
+            const response = await fetch(`/api/urls/${shortCode}/stats`);
+            const data = await response.json();
+            if (!response.ok) throw new Error(data.message || 'Failed to get statistics');
+            alert(`📊 Statistics for ${shortCode}:\n\nClicks: ${data.data.clickCount}\nCreated: ${new Date(data.data.createdAt).toLocaleString()}`);
+        } catch (error) {
+            alert('❌ ' + error.message);
+        }
+    } 
+    else if (type === 'delete') {
+        const shortCode = btn.dataset.code;
+        const index = parseInt(btn.dataset.index);
 
-        // Update click count in the list
-        const urlIndex = createdUrls.findIndex(u => u.shortCode === shortCode);
-        if (urlIndex !== -1) {
-            createdUrls[urlIndex].clickCount = data.data.clickCount;
+        if (!confirm('Are you sure you want to delete this URL?')) return;
+
+        try {
+            const response = await fetch(`/api/urls/${shortCode}`, { method: 'DELETE' });
+            const data = await response.json();
+            if (!response.ok) throw new Error(data.message || 'Failed to delete URL');
+            
+            createdUrls.splice(index, 1);
             updateUrlsList();
+            saveUrls();
+            alert('✓ URL deleted successfully');
+        } catch (error) {
+            alert('❌ ' + error.message);
         }
-
-        alert(`📊 Statistics for ${shortCode}:\n\nClicks: ${data.data.clickCount}\nCreated: ${new Date(data.data.createdAt).toLocaleString()}`);
-
-    } catch (error) {
-        alert('❌ ' + error.message);
-    }
-}
-
-// Delete URL
-async function deleteUrl(btn, shortCode, index) {
-    if (!confirm('Are you sure you want to delete this URL?')) {
-        return;
-    }
-
-    try {
-        const response = await fetch(`/api/urls/${shortCode}`, {
-            method: 'DELETE'
-        });
-
-        const data = await response.json();
-
-        if (!response.ok) {
-            throw new Error(data.message || 'Failed to delete URL');
-        }
-
-        // Remove from list
-        createdUrls.splice(index, 1);
-        updateUrlsList();
-
-        alert('✓ URL deleted successfully');
-
-    } catch (error) {
-        alert('❌ ' + error.message);
     }
 }
 
@@ -204,18 +184,10 @@ window.addEventListener('load', () => {
             console.error('Failed to load saved URLs:', e);
         }
     }
-
     document.getElementById('originalUrl').focus();
 });
 
-// Save URLs to localStorage whenever they change
+// Save URLs to localStorage
 function saveUrls() {
     localStorage.setItem('createdUrls', JSON.stringify(createdUrls));
 }
-
-// Update local storage whenever URLs change
-const originalUpdateUrlsList = updateUrlsList;
-updateUrlsList = function() {
-    originalUpdateUrlsList();
-    saveUrls();
-};
