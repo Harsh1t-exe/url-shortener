@@ -111,19 +111,18 @@ function updateUrlsList() {
                 <div class="url-meta">Created: ${new Date(url.createdAt).toLocaleString()}</div>
             </div>
             <div class="url-actions">
-                <button class="btn btn-small btn-copy" onclick="copyUrlToClipboard('${url.shortUrl}')">Copy Link</button>
-                <button class="btn btn-small btn-stats" onclick="getStats('${url.shortCode}')">Stats</button>
-                <button class="btn btn-small btn-delete" onclick="deleteUrl('${url.shortCode}', ${index})">Delete</button>
+                <button class="btn btn-small btn-copy" onclick="copyUrlToClipboard(this, '${url.shortUrl}')">Copy Link</button>
+                <button class="btn btn-small btn-stats" onclick="getStats(this, '${url.shortCode}')">Stats</button>
+                <button class="btn btn-small btn-delete" onclick="deleteUrl(this, '${url.shortCode}', ${index})">Delete</button>
             </div>
         </div>
     `).join('');
 }
 
 // Copy URL to clipboard (modern Clipboard API)
-function copyUrlToClipboard(url) {
+function copyUrlToClipboard(btn, url) {
     navigator.clipboard.writeText(url).then(() => {
         // Show success feedback
-        const btn = event.target;
         const originalText = btn.textContent;
         btn.textContent = '✓ Copied!';
         
@@ -143,7 +142,7 @@ function copyUrlToClipboard(url) {
 }
 
 // Get statistics
-async function getStats(shortCode) {
+async function getStats(btn, shortCode) {
     try {
         const response = await fetch(`/api/urls/${shortCode}/stats`);
         const data = await response.json();
@@ -167,7 +166,7 @@ async function getStats(shortCode) {
 }
 
 // Delete URL
-async function deleteUrl(shortCode, index) {
+async function deleteUrl(btn, shortCode, index) {
     if (!confirm('Are you sure you want to delete this URL?')) {
         return;
     }
